@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MirrorCheck | Neurological Screening Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50% { transform: scale(1.03); opacity: 1; }
+    }
+    .splash-animate { animation: pulseGlow 2s ease-in-out infinite; }
+    .brand-logo-splash { width: 130px !important; height: 130px !important; object-fit: contain !important; }
+    .brand-logo-nav { width: 38px !important; height: 38px !important; object-fit: contain !important; }
+    .brand-logo-card { width: 75px !important; height: 75px !important; object-fit: contain !important; }
+    .brand-logo-report { width: 50px !important; height: 50px !important; object-fit: contain !important; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-report, #printable-report * { visibility: visible; }
+      #printable-report { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; background: #fff !important; color: #000 !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 font-sans overflow-x-hidden">
+
+  <!-- ================= SPLASH SCREEN ================= -->
+  <div id="splash-screen" class="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center transition-all duration-700">
+    <div class="text-center splash-animate px-4 flex flex-col items-center">
+      <img src="/static/logo.png" alt="MirrorCheck Logo" class="brand-logo-splash mx-auto mb-4 drop-shadow-xl" width="130" height="130">
+      <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">MirrorCheck</h1>
+      <p class="text-cyan-600 dark:text-cyan-400 text-xs sm:text-sm font-bold uppercase tracking-widest mt-1">Your Face &bull; Our Care</p>
+    </div>
+  </div>
+
+  <!-- ================= TOP NAVBAR ================= -->
+  <header class="no-print fixed top-0 left-0 right-0 bg-white/80 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between z-50">
+    <div class="flex items-center space-x-3.5">
+      <img src="/static/logo.png" alt="MirrorCheck Logo" class="brand-logo-nav rounded-xl shadow-md" width="38" height="38">
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          MirrorCheck <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-800 font-bold tracking-wider">AI TRIAGE</span>
+        </h1>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">YOUR FACE &bull; OUR CARE</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <div id="patient-chip" class="hidden text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 font-mono"></div>
+      <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-500 border border-slate-300 dark:border-slate-700 transition-all shadow-sm">
+        <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= STAGE 1: PATIENT REGISTRATION ================= -->
+  <div id="stage-intake" class="w-full max-w-md bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 rounded-3xl p-8 shadow-xl dark:shadow-2xl backdrop-blur mt-12 transition-all">
+    <div class="text-center mb-6 flex flex-col items-center">
+      <img src="/static/logo.png" alt="MirrorCheck Logo" class="brand-logo-card mx-auto mb-3 drop-shadow-md" width="75" height="75">
+      <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Patient Registration</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold uppercase tracking-wider">Automated Neuromuscular Vision Screening</p>
+    </div>
+
+    <form onsubmit="handleRegistration(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Full Name</label>
+        <input type="text" id="p-name" required placeholder="e.g. Sharma" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 transition-all">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Age</label>
+          <input type="number" id="p-age" required min="1" max="120" placeholder="e.g. 52" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 transition-all">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Location</label>
+          <input type="text" id="p-loc" required placeholder="City / Ward" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 transition-all">
+        </div>
+      </div>
+
+      <button type="submit" class="w-full mt-2 py-3.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 font-bold text-sm text-white rounded-xl shadow-lg shadow-cyan-600/30 transition-all active:scale-[0.98]">
+        Proceed to Checkup
+      </button>
+    </form>
+  </div>
+
+  <!-- ================= STAGE 2: MODE SELECTION ================= -->
+  <div id="stage-consent" class="hidden w-full max-w-lg bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 rounded-3xl p-8 shadow-xl dark:shadow-2xl backdrop-blur mt-12 text-center transition-all">
+    <img src="/static/logo.png" alt="MirrorCheck Logo" class="brand-logo-report mx-auto mb-3 drop-shadow" width="50" height="50">
+    <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Choose Screening Method</h2>
+    <p class="text-slate-600 dark:text-slate-300 text-sm mt-1 leading-relaxed">
+      Patient: <span id="consent-patient-name" class="font-bold text-cyan-600 dark:text-cyan-400"></span>. Select your assessment pathway:
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+      <div onclick="startCameraAndScan()" class="cursor-pointer border-2 border-slate-200 dark:border-slate-700 hover:border-cyan-500 p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 transition-all flex flex-col items-center group active:scale-95">
+        <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </div>
+        <h4 class="font-bold text-sm text-slate-900 dark:text-white">Live Camera Scan</h4>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Automatic 5s real-time capture via webcam</p>
+      </div>
+
+      <label for="gallery-input" class="cursor-pointer border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-500 p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 transition-all flex flex-col items-center group active:scale-95">
+        <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <h4 class="font-bold text-sm text-slate-900 dark:text-white">Upload from Gallery</h4>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Select patient photo from device storage</p>
+        <input type="file" id="gallery-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+      </label>
+    </div>
+
+    <p id="upload-status" class="hidden text-xs font-semibold text-rose-500 font-mono mb-4"></p>
+
+    <button onclick="backToIntake()" class="w-full py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm transition-all">
+      Back to Registration
+    </button>
+  </div>
+
+  <!-- ================= STAGE 3: ACTIVE CAMERA SCAN ================= -->
+  <div id="stage-camera" class="hidden w-full max-w-3xl mt-16 flex flex-col items-center">
+    <div class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
+      <div class="aspect-video relative bg-black flex items-center justify-center">
+        <video id="webcam" class="hidden" autoplay playsinline></video>
+        <canvas id="output-canvas" class="w-full h-full object-cover"></canvas>
+
+        <div id="scan-countdown-box" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center">
+          <p class="text-cyan-400 text-xs font-bold font-mono uppercase tracking-widest mb-2">Analyzing Neuromuscular Alignment</p>
+          <div id="scan-timer-num" class="text-8xl font-black font-mono text-white tracking-tighter">5</div>
+          <p class="text-slate-300 text-xs mt-3 font-medium">Look straight at the camera and relax facial muscles...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STAGE 4: COMPREHENSIVE MEDICAL REPORT ================= -->
+  <div id="stage-report" class="hidden w-full max-w-3xl mt-16 mb-12">
+    
+    <div id="emergency-banner" class="hidden bg-rose-600 text-white font-bold p-4 rounded-2xl mb-4 text-center text-sm shadow-xl flex items-center justify-center gap-3 animate-pulse no-print">
+      <span class="text-2xl">🚨</span>
+      <span>CRITICAL ALERT: Acute Stroke Indicator Detected! Alarm sounding for 5 seconds.</span>
+    </div>
+
+    <div id="printable-report" class="bg-white text-slate-900 rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-200 transition-all">
+      
+      <div class="flex justify-between items-center border-b-2 border-slate-900 pb-5">
+        <div class="flex items-center gap-3.5">
+          <img src="/static/logo.png" alt="MirrorCheck Logo" class="brand-logo-report object-contain" width="50" height="50">
+          <div>
+            <h2 class="text-2xl font-black tracking-tight text-slate-900 leading-tight">MIRRORCHECK HEALTH REPORT</h2>
+            <p class="text-xs text-slate-500 font-semibold tracking-wide uppercase mt-0.5">Automated Stroke & Facial Neuromuscular Assessment</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-bold text-slate-900">CONFIDENTIAL MEDICAL DOCUMENT</p>
+          <p id="report-date" class="text-xs text-slate-500 font-mono mt-0.5"></p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 bg-slate-50 rounded-2xl p-4 my-6 border border-slate-200 text-xs">
+        <div>
+          <span class="text-slate-400 block font-bold uppercase text-[10px]">Patient Name</span>
+          <span id="rep-name" class="font-extrabold text-sm text-slate-900">--</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block font-bold uppercase text-[10px]">Age</span>
+          <span id="rep-age" class="font-extrabold text-sm text-slate-900">--</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block font-bold uppercase text-[10px]">Location</span>
+          <span id="rep-loc" class="font-extrabold text-sm text-slate-900">--</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block font-bold uppercase text-[10px]">Status</span>
+          <span class="font-bold text-xs text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block mt-0.5">VERIFIED</span>
+        </div>
+      </div>
+
+      <div id="score-box" class="p-6 rounded-2xl border text-center mb-6 transition-all flex items-center justify-between">
+        <div class="text-left">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Overall Facial Health Score</p>
+          <h3 id="score-verdict-title" class="text-2xl font-black tracking-tight mt-0.5">OPTIMAL HEALTH</h3>
+          <p id="score-verdict-subtitle" class="text-xs font-medium text-slate-600 mt-1 max-w-md"></p>
+        </div>
+        <div class="text-right flex items-baseline">
+          <span id="rep-score-num" class="text-5xl font-black font-mono tracking-tight text-slate-900">10</span>
+          <span class="text-xl font-bold font-mono text-slate-400">/10</span>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Measured Facial Symmetry Parameters</h4>
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
+              <tr>
+                <th class="py-3 px-4">Area Evaluated</th>
+                <th class="py-3 px-4">Observed Asymmetry</th>
+                <th class="py-3 px-4">Standard Safe Range</th>
+                <th class="py-3 px-4">Clinical Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 font-mono">
+              <tr>
+                <td class="py-3 px-4 font-sans font-semibold text-slate-800">Mouth / Lip Corner Balance (OAQ)</td>
+                <td id="rep-val-oaq" class="py-3 px-4 font-bold text-slate-900">0.0%</td>
+                <td class="py-3 px-4 text-slate-500">&lt; 5.0%</td>
+                <td id="rep-find-oaq" class="py-3 px-4 font-sans font-semibold">Normal</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-sans font-semibold text-slate-800">Eyelid Opening Equality (EAR Diff)</td>
+                <td id="rep-val-ear" class="py-3 px-4 font-bold text-slate-900">0.000</td>
+                <td class="py-3 px-4 text-slate-500">&lt; 0.045</td>
+                <td id="rep-find-ear" class="py-3 px-4 font-sans font-semibold">Normal</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">What Was Observed During Screening</p>
+          <p id="rep-problem-text" class="text-xs text-slate-800 leading-relaxed font-semibold"></p>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="bg-cyan-50/60 border border-cyan-200 rounded-xl p-4">
+          <p class="text-[10px] font-bold text-cyan-800 uppercase tracking-wider mb-1.5">Action Plan: How to Keep or Reach 10/10 Health</p>
+          <ul id="rep-action-list" class="text-xs text-slate-800 space-y-1.5 list-disc list-inside"></ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="no-print mt-6 flex gap-4">
+      <button onclick="window.print()" class="flex-1 py-3.5 bg-slate-900 hover:bg-black text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Download / Print Medical Report (PDF)
+      </button>
+      <button onclick="resetApp()" class="w-1/3 py-3.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm rounded-2xl transition-all">
+        New Patient Check
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let patientData = {};
+    let ws = null;
+    let cameraStream = null;
+    let frameSendInterval = null;
+
+    // Direct Pre-Armed Web Audio Pipeline
+    let preArmedContext = null;
+    let preArmedOscillator = null;
+    let preArmedGain = null;
+
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('output-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Runs synchronously during the user's click/selection event to unlock audio
+    function initializeSilentAudioLock() {
+      try {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (!preArmedContext) {
+          preArmedContext = new AudioClass();
+        }
+        if (preArmedContext.state === 'suspended') {
+          preArmedContext.resume();
+        }
+
+        // Create oscillator node in silent state
+        if (!preArmedOscillator) {
+          preArmedOscillator = preArmedContext.createOscillator();
+          preArmedGain = preArmedContext.createGain();
+
+          preArmedOscillator.type = 'sawtooth';
+          preArmedOscillator.frequency.setValueAtTime(800, preArmedContext.currentTime);
+
+          // Silent during user gesture authorization
+          preArmedGain.gain.setValueAtTime(0.0001, preArmedContext.currentTime);
+
+          preArmedOscillator.connect(preArmedGain);
+          preArmedGain.connect(preArmedContext.destination);
+          preArmedOscillator.start();
+        }
+      } catch (err) {
+        console.warn("Audio Context init note:", err);
+      }
+    }
+
+    // Trigger 5-second acoustic pulse siren
+    function activateFiveSecondAlarm() {
+      try {
+        if (!preArmedContext || !preArmedGain) {
+          initializeSilentAudioLock();
+        }
+
+        const now = preArmedContext.currentTime;
+        const totalDuration = 5.0; // Exact 5 seconds
+
+        // Modulate gain and frequency for an alternating medical alarm
+        for (let t = 0; t < totalDuration; t += 0.35) {
+          preArmedOscillator.frequency.setValueAtTime(880, now + t);
+          preArmedOscillator.frequency.setValueAtTime(580, now + t + 0.18);
+          preArmedGain.gain.setValueAtTime(0.7, now + t);
+          preArmedGain.gain.setValueAtTime(0.01, now + t + 0.30);
+        }
+
+        // Return to silent when 5s finishes
+        preArmedGain.gain.setValueAtTime(0.0, now + totalDuration);
+      } catch (err) {
+        console.error("Alarm activation error:", err);
+      }
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.classList.add('opacity-0');
+        setTimeout(() => splash.classList.add('hidden'), 700);
+      }, 2000);
+    });
+
+    function handleRegistration(e) {
+      e.preventDefault();
+      initializeSilentAudioLock(); // Authorize audio on form submit
+
+      patientData = {
+        name: document.getElementById('p-name').value.trim(),
+        age: document.getElementById('p-age').value.trim(),
+        location: document.getElementById('p-loc').value.trim()
+      };
+
+      document.getElementById('consent-patient-name').innerText = patientData.name;
+      document.getElementById('patient-chip').innerText = `Patient: ${patientData.name} (${patientData.age}y)`;
+      document.getElementById('patient-chip').classList.remove('hidden');
+
+      document.getElementById('stage-intake').classList.add('hidden');
+      document.getElementById('stage-consent').classList.remove('hidden');
+    }
+
+    function backToIntake() {
+      document.getElementById('stage-consent').classList.add('hidden');
+      document.getElementById('stage-intake').classList.remove('hidden');
+      document.getElementById('upload-status').classList.add('hidden');
+    }
+
+    function resetApp() {
+      if (preArmedGain && preArmedContext) {
+        preArmedGain.gain.setValueAtTime(0.0, preArmedContext.currentTime);
+      }
+      document.getElementById('stage-report').classList.add('hidden');
+      document.getElementById('emergency-banner').classList.add('hidden');
+      document.getElementById('stage-intake').classList.remove('hidden');
+      document.getElementById('p-name').value = "";
+      document.getElementById('p-age').value = "";
+      document.getElementById('p-loc').value = "";
+      document.getElementById('patient-chip').classList.add('hidden');
+      document.getElementById('upload-status').classList.add('hidden');
+    }
+
+    async function handleImageUpload(event) {
+      // Synchronously unlock audio during click selection
+      initializeSilentAudioLock();
+
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('upload-status');
+      statusEl.classList.remove('hidden');
+      statusEl.innerText = "Analyzing facial symmetry in uploaded image...";
+      statusEl.className = "text-xs font-semibold text-cyan-500 font-mono mb-4 animate-pulse";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/api/analyze-image", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          statusEl.innerText = result.error || "Analysis failed. Please choose another image.";
+          statusEl.className = "text-xs font-semibold text-rose-500 font-mono mb-4";
+          return;
+        }
+
+        document.getElementById('stage-consent').classList.add('hidden');
+        renderMedicalReport(result);
+      } catch (err) {
+        statusEl.innerText = "Connection error. Make sure server is running.";
+        statusEl.className = "text-xs font-semibold text-rose-500 font-mono mb-4";
+      }
+    }
+
+    function startCameraAndScan() {
+      initializeSilentAudioLock();
+      document.getElementById('stage-consent').classList.add('hidden');
+      document.getElementById('stage-camera').classList.remove('hidden');
+
+      navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            initWebSocket();
+          };
+        })
+        .catch(err => alert("Camera permission error: " + err));
+    }
+
+    function stopCameraHardware() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      if (frameSendInterval) {
+        clearInterval(frameSendInterval);
+        frameSendInterval = null;
+      }
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    }
+
+    function initWebSocket() {
+      const loc = window.location;
+      const wsUri = (loc.protocol === "https:" ? "wss:" : "ws:") + "//" + loc.host + "/ws";
+      ws = new WebSocket(wsUri);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ cmd: "start_scan" }));
+        runCountdown(5);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.image) {
+          const img = new Image();
+          img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          img.src = "data:image/jpeg;base64," + data.image;
+        }
+
+        if (data.diagnosis) {
+          stopCameraHardware();
+          document.getElementById('stage-camera').classList.add('hidden');
+          renderMedicalReport(data);
+        }
+      };
+
+      const captureCanvas = document.createElement('canvas');
+      const captureCtx = captureCanvas.getContext('2d');
+      frameSendInterval = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN && video.readyState === video.HAVE_ENOUGH_DATA) {
+          captureCanvas.width = 640;
+          captureCanvas.height = 360;
+          captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+          const b64 = captureCanvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+          ws.send(JSON.stringify({ frame: b64 }));
+        }
+      }, 50);
+    }
+
+    function runCountdown(seconds) {
+      const num = document.getElementById('scan-timer-num');
+      let current = seconds;
+      num.innerText = current;
+
+      const interval = setInterval(() => {
+        current--;
+        if (current > 0) {
+          num.innerText = current;
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+
+    function renderMedicalReport(data) {
+      const d = data.diagnosis;
+      document.getElementById('stage-report').classList.remove('hidden');
+
+      document.getElementById('rep-name').innerText = patientData.name;
+      document.getElementById('rep-age').innerText = patientData.age;
+      document.getElementById('rep-loc').innerText = patientData.location;
+      document.getElementById('report-date').innerText = new Date().toLocaleString();
+
+      document.getElementById('rep-val-oaq').innerText = d.oaq.toFixed(1) + "%";
+      document.getElementById('rep-val-ear').innerText = d.ear.toFixed(3);
+      document.getElementById('rep-find-oaq').innerText = d.oaq > 5.0 ? "Paresis Asymmetry Present" : "Normal Symmetrical Excursion";
+      document.getElementById('rep-find-ear').innerText = d.ear > 0.045 ? "Palpebral Ptosis Observed" : "Balanced Eye Margin";
+
+      const scoreBox = document.getElementById('score-box');
+      const scoreNum = document.getElementById('rep-score-num');
+      const title = document.getElementById('score-verdict-title');
+      const subtitle = document.getElementById('score-verdict-subtitle');
+      const problemText = document.getElementById('rep-problem-text');
+      const actionList = document.getElementById('rep-action-list');
+      const emergencyBanner = document.getElementById('emergency-banner');
+
+      scoreNum.innerText = d.score;
+      title.innerText = d.status_title;
+      subtitle.innerText = d.status_desc;
+      problemText.innerText = d.problem_description;
+
+      actionList.innerHTML = "";
+      d.tips_to_ten.forEach(tip => {
+        const li = document.createElement('li');
+        li.innerText = tip;
+        actionList.appendChild(li);
+      });
+
+      if (d.danger) {
+        emergencyBanner.classList.remove('hidden');
+        // Activate 5-second emergency audio siren
+        activateFiveSecondAlarm();
+        scoreBox.className = "p-6 rounded-2xl border text-center mb-6 transition-all flex items-center justify-between bg-rose-50 border-rose-400 text-rose-950";
+        scoreNum.className = "text-5xl font-black font-mono tracking-tight text-rose-600";
+      } else if (d.score >= 8) {
+        emergencyBanner.classList.add('hidden');
+        scoreBox.className = "p-6 rounded-2xl border text-center mb-6 transition-all flex items-center justify-between bg-amber-50 border-amber-300 text-amber-950";
+        scoreNum.className = "text-5xl font-black font-mono tracking-tight text-amber-600";
+      } else {
+        emergencyBanner.classList.add('hidden');
+        scoreBox.className = "p-6 rounded-2xl border text-center mb-6 transition-all flex items-center justify-between bg-emerald-50 border-emerald-300 text-emerald-950";
+        scoreNum.className = "text-5xl font-black font-mono tracking-tight text-emerald-700";
+      }
+    }
+  </script>
+</body>
+</html>
